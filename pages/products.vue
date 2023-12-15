@@ -1,6 +1,6 @@
 <template>
 
-    <button @click="refresh">refresh page</button>
+    <button @click="twoActions()">refresh page</button>
     <div v-if="pending" class="loading">
         <h1>Loading...</h1>
       </div>
@@ -12,31 +12,71 @@
                 Home link
               </NuxtLink>
               
-                <div v-for="product in productInfo.products" class="wrapper" >
+                <div v-for="product in productInfo.minProducts" class="wrapper" v-if="!state">
                     <img :src="product.image" alt=""/>
                     <h2>{{product.title}}</h2>
                 </div>
+
+                <div v-for="product in productInfo.maxProducts" class="wrapper" :key="productInfo.maxProducts.id" v-if="state" >
+                    <img :src="product.image" alt=""/>
+                    <h2>{{product.title}}</h2>
+                </div>
+
+                <div v-if="!state">
+                    <p class="view_all" @click="handleClick()">View all</p>
+                </div>
+               
         </div>
+
     </div>
+    
+     
+
+
 </template>
 
 <script setup>
 const { pending, data: productInfo , refresh} = useAsyncData(
     "productInfo", 
     async () => {
-    const [products, categories] = await Promise.all([
-        $fetch('https://fakestoreapi.com/products'), 
-        $fetch('https://fakestoreapi.com/products/categories')
+    // let myLimit = 5;
+
+    const [minProducts, maxProducts] = await Promise.all([
+        $fetch(`${baseUrl}?limit=${5}`), 
+        $fetch(`${baseUrl}?limit=${25}`), 
+        // $fetch('https://fakestoreapi.com/products/categories')
     ]);
+
+const maxFilter = () => {
+    return maxProducts.filter((item) => item.id > 5)
+}
+
         return {
-            products,
-            categories
+            minProducts,
+            maxProducts
         }
     },  
             {
             lazy:false,
             }
 );
+
+const twoActions  = () => {
+    refresh()
+    state.value = false
+}
+
+const baseUrl = 'https://fakestoreapi.com/products';
+const state = ref(false)
+
+const handleClick = () => {
+   state.value = !state.value
+}
+
+onMounted(() => {
+
+})
+
 // const {pending, data:products, refresh} = await useFetch(
 //     "https://fakestoreapi.com/products",
 //     {
@@ -57,9 +97,6 @@ const { pending, data: productInfo , refresh} = useAsyncData(
 <style  scoped>
 
 .absoluted{
-   
-    position: absolute;
-
 
     top: 0;
     left: 0;
@@ -74,7 +111,7 @@ const { pending, data: productInfo , refresh} = useAsyncData(
     gap:30px;
     font-size: 10px;
     padding: 50px;
-    background-color: rgb(0, 0, 0);
+  
 }
 .wrapper{
     display: flex;
@@ -92,6 +129,16 @@ img{
     height: 150px;
     align-self: center; 
 }
+.view_all{
+    position: absolute;
+    bottom: 0;
+    left: 750px;
+   font-size: 30px;
+   color:rgb(250, 249, 249);
+    border: 1px solid white;
+    border-radius: 5px;
+}
+
 .home{
    position: absolute;
    left:50px;
@@ -99,6 +146,7 @@ img{
    color:white;
    opacity: 80%;
 }
+
 
 .loading{
     
